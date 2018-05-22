@@ -171,6 +171,7 @@ vector<double> getXY(double s, double d, const vector<double> &maps_s, const vec
 void behavior_planning(vector<vector<double>> sensor_fusion, double car_s, int prev_size, int *lane, double *ref_vel){
 
 	static int state = 0; //0 = keep_lane, 1 = prep. change lane, 2 = change left, 3 = change right
+	static bool first_deceleration = false;
 
 	int *lane_pt = lane;
 	double *ref_vel_pt = ref_vel;
@@ -200,15 +201,28 @@ void behavior_planning(vector<vector<double>> sensor_fusion, double car_s, int p
 		  				// Do some logic here, lower reference velocity so we do not crash into the
 		  				// car in front of us, could also flag to try to change lanes
 		  				//ref_vel = 29.5; // mph
-		  				too_close = true;
+		  				//too_close = true;
 
-		  				if(*lane_pt > 0){
-		  					*lane_pt = 0;
-		  				}
+		  				//if(*lane_pt > 0){
+		  				//	*lane_pt = 0;
+		  				//}
+		  				state = 1; // prep. change lane
+		  				break;
 		  			}
 		  		}
 		  	}
 
+  			if(*ref_vel_pt < 49.5){
+
+  		  	    if (first_deceleration){
+  		  	    	*ref_vel_pt += .212;//.224;
+  		  	    }
+  		  	    else{
+  		  	    	*ref_vel_pt +=.560;//224;
+  		  	    }
+  		  	}
+
+  		    /*
   	  		static bool first_deceleration = false;
 
   	  		if(too_close){
@@ -224,8 +238,167 @@ void behavior_planning(vector<vector<double>> sensor_fusion, double car_s, int p
   	  				*ref_vel_pt +=.560;//224;
   	  			}
   	  		}
+  	  		*/
 
   			break;
+
+  		case(1): // prep. change lane
+
+			bool change_center_safe = false;
+  			bool change_left_safe = false;
+  			bool change_right_safe = false;
+  			bool too_close = false;
+
+			if(*lane_pt == 0 || *lane_pt == 2){
+				// find rev_v to use
+				change_center_safe = true;
+				for(int i = 0; i < sensor_fusion.size(); i++){
+				//for(int i = 0; i < 2; i++){
+					// car is in my lane
+					float d = sensor_fusion[i][6];
+					if(d < (2+4+2) && d > (2+4-2)){
+			  			double vx = sensor_fusion[i][3];
+			  			double vy = sensor_fusion[i][4];
+			  			double check_speed = sqrt(vx*vx+vy*vy);
+						double check_car_s = sensor_fusion[i][5];
+
+			  			// if using previous points can project s value out
+			  			// predict s coordinate in future for other car
+			  			check_car_s += ((double)prev_size*.02*check_speed);
+
+						cout<<d<<endl;
+						cout<<check_car_s<<endl;
+						cout<<car_s<<endl;
+						if(car_s-15 < check_car_s && car_s+15 > check_car_s){
+							change_center_safe = false;
+						}
+
+						//if((car_s-20 < check_car_s && car-s-15 > check_car_s) || (car_s+15 < check_car_s && check_car_s < car_s+20)){
+
+						//}
+					}
+				}
+				cout << "hola2" << endl;
+			}
+
+			if(*lane_pt == 1){
+				// find rev_v to use
+				change_left_safe = true;
+				for(int i = 0; i < sensor_fusion.size(); i++){
+					//for(int i = 0; i < 2; i++){
+					// car is in my lane
+					float d = sensor_fusion[i][6];
+					if(d < 4){
+			  			double vx = sensor_fusion[i][3];
+			  			double vy = sensor_fusion[i][4];
+			  			double check_speed = sqrt(vx*vx+vy*vy);
+						double check_car_s = sensor_fusion[i][5];
+
+			  			// if using previous points can project s value out
+			  			// predict s coordinate in future for other car
+			  			check_car_s += ((double)prev_size*.02*check_speed);
+						cout<<d<<endl;
+						cout<<check_car_s<<endl;
+						cout<<car_s<<endl;
+						if(car_s-15 < check_car_s && car_s+15 > check_car_s){
+							change_left_safe = false;
+						}
+					}
+				}
+
+				cout << "hola" << endl;
+
+				// find rev_v to use
+				change_right_safe = true;
+				for(int i = 0; i < sensor_fusion.size(); i++){
+					//for(int i = 0; i < 2; i++){
+					// car is in my lane
+					float d = sensor_fusion[i][6];
+					if(d > 8){
+			  			double vx = sensor_fusion[i][3];
+			  			double vy = sensor_fusion[i][4];
+			  			double check_speed = sqrt(vx*vx+vy*vy);
+						double check_car_s = sensor_fusion[i][5];
+
+			  			// if using previous points can project s value out
+			  			// predict s coordinate in future for other car
+			  			check_car_s += ((double)prev_size*.02*check_speed);
+
+						cout<<d<<endl;
+						cout<<check_car_s<<endl;
+						cout<<car_s<<endl;
+						if(car_s-15 < check_car_s && car_s+15 > check_car_s){
+							change_right_safe = false;
+						}
+					}
+				}
+				cout<< "-----" << endl;
+			}
+
+			cout<<change_center_safe<<endl;
+			cout<<change_left_safe<<endl;
+			cout<<change_right_safe<<endl;
+
+			if(change_center_safe){
+				*lane_pt = 1;
+				state = 0;
+			}
+			else if(change_left_safe){
+				*lane_pt = 0;
+				state = 0;
+			}
+			else if(change_right_safe){
+				*lane_pt = 2;
+				state = 0;
+			}
+			else{
+				// find rev_v to use
+				for(int i = 0; i < sensor_fusion.size(); i++){
+				//for(int i = 0; i < 2; i++){
+					// car is in my lane
+					float d = sensor_fusion[i][6];
+					if(d < (2+4*(*lane_pt)+2) && d > (2+4*(*lane_pt)-2)){
+						double vx = sensor_fusion[i][3];
+						double vy = sensor_fusion[i][4];
+						double check_speed = sqrt(vx*vx+vy*vy);
+						double check_car_s = sensor_fusion[i][5];
+
+						// if using previous points can project s value out
+						// predict s coordinate in future for other car
+						check_car_s += ((double)prev_size*.02*check_speed);
+
+						// check s values greater than mine and s gap (30m)
+						if((check_car_s > car_s) && ((check_car_s-car_s) < 30)){
+							// Do some logic here, lower reference velocity so we do not crash into the
+							// car in front of us, could also flag to try to change lanes
+							//ref_vel = 29.5; // mph
+							too_close = true;
+
+							//if(*lane_pt > 0){
+							//	*lane_pt = 0;
+							//}
+							break;
+						}
+					}
+				}
+
+	  	    	if(too_close){
+	  	    	    *ref_vel_pt -= .212;//.224;
+	  	    	  	first_deceleration = true;
+	  	    	}
+	  	    	else if(*ref_vel_pt < 49.5){
+
+	  	    	  	if (first_deceleration){
+	  	    	  		*ref_vel_pt += .212;//.224;
+	  	    	  	}
+	  	    	  	else{
+	  	    	  		*ref_vel_pt +=.560;//224;
+	  	    	  	}
+	  	        }
+
+			}
+
+  	    	break;
   	}
 
 }
@@ -427,8 +600,6 @@ int main() {
           	double target_dist = sqrt((target_x)*(target_x)+(target_y)*(target_y));
 
           	double x_add_on = 0;
-
-          	cout << previous_path_x.size() << endl;
 
           	// fill up rest of path planner after filling it with previous points
           	for (int i = 1; i <= 50-previous_path_x.size(); i++){
