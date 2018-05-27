@@ -63,7 +63,7 @@ The states are described below:
 
 -> `keepLane` (line `194`). Keeps current lane at a maximum velocity of `49.5 mph` and goes to `prepareChangeLane` as soon as it is detected that the distance to the front vehicle is lower than `25m`.
 
--> `prepareChangeLane` (line `234`). If ego is in left or right lane, checks safe conditions to change to center lane. If ego is in center lane, checks safe conditions to change to left or right lanes (left lane has priority, except for the case when cars are detected in left lane, but not in right). If a change is safe, to to corresponding change state. If no change is safe, adjust velocity to the one of the front car.
+-> `prepareChangeLane` (line `234`). If ego is in left or right lane, checks safe conditions to change to center lane. If ego is in center lane, checks safe conditions to change to left or right lanes (left lane has priority, except for the case when cars are detected in left lane, but not in right). If a change is safe, go to corresponding change state. If no change is safe, adjust velocity to the one of the front car.
 
 -> `changeCenterLane` (line `518`). Measures Frenet d car coordinate. As soon as it is detected that ego is in center lane, goes to `keepLane`.
 
