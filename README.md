@@ -73,6 +73,4 @@ The states are described below:
 
 #### 6. The car is able to drive at least 4.32 miles without incident.
 
-Simulations proved that car is able to drive without incident during the mentioned time and even more. The following video shows the car action during `5.6 miles` (8 minutes):
-
-[![Alt text for your video](https://i.ytimg.com/vi/rt2zTUoGkRQ/hqdefault.jpg?sqp=-oaymwEZCNACELwBSFXyq4qpAwsIARUAAIhCGAFwAQ==&rs=AOn4CLCrDG_jCyZL-lr8-TEH5Y4nnhtHaA)](https://www.youtube.com/watch?v=rt2zTUoGkRQ&t=137s)
+Simulations proved that car is able to drive without incident during the mentioned time and even more. The car action during `5.6 miles` (8 minutes) is shown in the following [video](https://www.youtube.com/watch?v=rt2zTUoGkRQ&t=137s).
